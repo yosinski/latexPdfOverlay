@@ -20,7 +20,7 @@ Requirements: [LaTeX](http://www.latex-project.org/) (which probably
 also includes the required package
 [tikz](http://www.texample.net/tikz/examples/)).
 
-To install, simply put ```fillpdf``` somewhere on your PATH.
+To install, simply put [```fillpdf```](https://github.com/yosinski/latexPdfOverlay/blob/master/fillpdf) somewhere on your PATH.
 
 
 
@@ -35,13 +35,18 @@ First, create a template file like the included [```example_template.tex```](htt
 
     ./fillpdf --debug example_template.tex example_form.pdf output.pdf
 
-This produces the following debug ```output.pdf```:
+This produces the following debug ```output.pdf```, with lines every 1cm, heavy lines every 5cm, and field names filled in with default values if no other values are given:
 
 [![form-debug](https://github.com/yosinski/latexPdfOverlay/raw/master/screenshots/form-debug.png)](https://github.com/yosinski/latexPdfOverlay/raw/master/screenshots/form-debug.png)
 
 When you get the alignment right, then you can run the script again to produce the final output with the appropriate values filled in:
 
-    ./fillpdf --name "John Doe" --why "for research" --sure yes --months "9 months (please rush)" --grovel "I had the receipt but then my small dog ate it and then a larger dog ate my smaller dog, so I cannot turn the receipt in. Please accept instead the attached impressionist watercolor painting of the receipt and observed food chain." example_template.tex example_form.pdf output.pdf && skimreload output.pdf
+    ./fillpdf --name "John Doe" \
+      --why "for research" \
+      --sure yes \
+      --months "9 months (please rush)" \
+      --grovel "I had the receipt but then my small dog ate it and then a larger dog ate my smaller dog, so I cannot turn the receipt in. Please accept instead the attached impressionist watercolor painting of the receipt and observed food chain." \
+      example_template.tex example_form.pdf output.pdf
 
 [![form-filled](https://github.com/yosinski/latexPdfOverlay/raw/master/screenshots/form-filled.png)](https://github.com/yosinski/latexPdfOverlay/raw/master/screenshots/form-filled.png)
 
