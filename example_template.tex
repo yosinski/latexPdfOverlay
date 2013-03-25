@@ -1,0 +1,42 @@
+\documentclass[letterpaper]{article}% ensure identical page size
+
+% This is the template you create to define the overlay fields and
+% positions.
+%
+% When complete, run something like this:
+%
+% ./fillpdf --name "John Doe" --why "for research" --sure yes --months "9 months (please rush)" --grovel "I had the receipt but then my small dog ate it and then a larger dog ate my smaller dog, so I cannot turn the receipt in. Please accept instead the attached impressionist watercolor painting of the receipt and observed food chain." example_template.tex example_form.pdf output.pdf
+
+\usepackage{tikz}
+\usepackage{varwidth}
+
+\pagestyle{empty}
+\begin{document}
+% Page 1
+\begin{tikzpicture}[remember picture,overlay]
+    \node at (current page.center) {\includegraphics[page=1]{__BASE__}};
+    \begin{scope}[shift={(current page.south west)},every node/.style={anchor=base west}]
+        % Grid to help find the positions (remove in final version)
+        \draw [help lines] (0,0) grid (current page.north east);                         % __DEBUGLINE__
+        \draw [help lines,thick] (0,0) grid [step=5cm] (current page.north east);        % __DEBUGLINE__
+
+        \tikzstyle{every node}=[font=\normalsize]
+        \node [anchor=west] at (11.0cm,22.6cm) {__NAME__};
+
+        \tikzstyle{every node}=[font=\normalsize]
+        \node [anchor=west] at (11.0cm,20.8cm) {__WHY__};
+
+        \tikzstyle{every node}=[font=\normalsize]
+        \node [anchor=west] at (11.0cm,19.0cm) {__SURE__};
+
+        \tikzstyle{every node}=[font=\normalsize]
+        \node [anchor=west] at (11.0cm,17.0cm) {__MONTHS__};
+
+        % block of text with word wrap
+        \tikzstyle{every node}=[font=\normalsize]
+        \node [baseline={([yshift={-\ht\strutbox}]a.north)}, anchor=west] at (11.0cm,14.0cm) {\begin{varwidth}{6cm} __GROVEL__ \end{varwidth}};
+
+    \end{scope}
+\end{tikzpicture}
+
+\end{document}

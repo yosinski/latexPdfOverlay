@@ -1,0 +1,145 @@
+#! /usr/bin/env python
+
+import os
+import sys
+import re
+import tempfile
+import shutil
+import subprocess
+#import ipdb as pdb
+
+
+
+def runCmd(args, cwd = '.'):
+    #proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd = cwd)#, , 
+    proc = subprocess.Popen(args, cwd = cwd)
+    out,err = proc.communicate()
+    code = proc.wait()
+
+    if code != 0:
+        raise Exception('Got error from running command with args %s in %s' % (repr(args), cwd))
+
+
+
+def usage():
+    print 'Creates filled pdfs using a particular template. Usage examples:'
+    print
+    print '''Normal usage:'''
+    print '''    fillpdf --name "John Doe" --foo bar --date "3/22/13" template.tex form_blank.pdf output.pdf'''
+    print
+    print '''To debug, add the --debug option to overlay a grid and display field names, and/or the --keep option to keep the intermediate latex files:'''
+    print '''    fillpdf --debug template.tex form_blank.pdf output.pdf'''
+    print '''    fillpdf --keep --debug template.tex form_blank.pdf output.pdf'''
+    sys.exit(1)
+
+
+
+def main():
+    args = sys.argv[1:]
+    
+    if len(args) < 3:
+        usage()
+
+    modeDebug = False
+    modeKeep = False
+    templateFilename, pdfInput, pdfOutput = args[-3:]
+    args = args[:-3]
+
+    while '--debug' in args:
+        modeDebug = True
+        args.remove('--debug')
+    while '--keep' in args:
+        modeKeep = True
+        args.remove('--keep')
+    # Now the rest of the args should be replacements
+    
+    if not os.path.exists(pdfInput):
+        print 'PDF file "%s" does not exist.' % pdfInput
+        sys.exit(1)
+
+    try:
+        with open(templateFilename) as ff:
+            templateLines = ff.readlines()
+    except IOError:
+        print 'Template file "%s" does not exist.' % templateFilename
+        sys.exit(1)
+
+    # __DEBUGLINE__ lines
+    if not modeDebug:
+        temp = []
+        for line in templateLines:
+            if '__DEBUGLINE__' in line:
+                line = '% ' + line
+            temp.append(line)
+        templateLines = temp
+
+    template = ''.join(templateLines)
+
+    # Replace __BASE__
+    pdfInputFilename = os.path.basename(pdfInput)
+    pdfInputFilenameNoExt = os.path.splitext(pdfInputFilename)[0]
+    template = template.replace('__BASE__', pdfInputFilenameNoExt)
+
+    fields = set(re.findall('__[A-Z0-9_]+__', template))
+    fields.discard('__BASE__')
+    fields.discard('__DEBUGLINE__')
+
+    # Process rest of replacement args
+    if len(args) % 2 != 0:
+        print 'WARNING: Ignored argument: "%s"' % args[-1]
+
+    replacements = {}
+    for ii in range(len(args)/2):
+        arg = args[ii*2]
+        val = args[ii*2+1]
+        if arg[:2] != '--':
+            print 'Expected arg "%s" to begin with --' % arg
+            sys.exit(1)
+        #field, value = arg[2:].split('=', 1)
+        fieldNormed = ('__%s__' % arg[2:]).upper()
+        if fieldNormed in fields:
+            replacements[fieldNormed] = val
+        else:
+            print ('WARNING: "%s" given on command line but "%s" not found in template file %s'
+                   % (arg, fieldNormed, templateFilename))
+
+    for field in fields:
+        #for key,val in replacements.iteritems():
+        if not field in replacements and modeDebug:
+            val = '(Field %s here)' % field
+        else:
+            val = replacements.get(field, '')
+        val = val.replace('_', '\_')
+        val = val.replace('$', '\$')
+        template = template.replace(field, val)
+
+    # Write to tmp file
+    tmpDir = tempfile.mkdtemp()
+    shutil.copy(pdfInput, tmpDir)
+    
+    texFilename = os.path.join(tmpDir, 'main.tex')
+    with open(texFilename, 'wb') as ff:
+        ff.write(template)
+
+    print '\nCompiling pdf with pdflatex:'
+    for ii in range(2):
+        # Run it twice...
+        runCmd(('pdflatex', 'main'), cwd = tmpDir)
+
+    # Clean up
+    #os.rename(os.path.join(tmpDir, 'main.pdf'), pdfOutput)
+    shutil.move(os.path.join(tmpDir, 'main.pdf'), pdfOutput)
+    if not modeKeep:
+        filesToDelete = ['main.tex', 'main.log', 'main.aux', pdfInputFilename]
+        for filename in filesToDelete:
+            os.unlink(os.path.join(tmpDir, filename))
+        os.rmdir(tmpDir)
+    else:
+        print 'Temp files are in %s' % tmpDir
+    print 'Generated filled form: %s' % pdfOutput
+
+
+
+if __name__ == '__main__':
+    main()
+    
