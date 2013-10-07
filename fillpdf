@@ -54,14 +54,14 @@ def main():
     # Now the rest of the args should be replacements
     
     if not os.path.exists(pdfInput):
-        print 'PDF file "%s" does not exist.' % pdfInput
+        print 'fillpfd: PDF file "%s" does not exist.' % pdfInput
         sys.exit(1)
 
     try:
         with open(templateFilename) as ff:
             templateLines = ff.readlines()
     except IOError:
-        print 'Template file "%s" does not exist.' % templateFilename
+        print 'fillpdf: Template file "%s" does not exist.' % templateFilename
         sys.exit(1)
 
     # __DEBUGLINE__ lines
@@ -86,21 +86,21 @@ def main():
 
     # Process rest of replacement args
     if len(args) % 2 != 0:
-        print 'WARNING: Ignored argument: "%s"' % args[-1]
+        print 'fillpdf: WARNING: Ignored argument: "%s"' % args[-1]
 
     replacements = {}
     for ii in range(len(args)/2):
         arg = args[ii*2]
         val = args[ii*2+1]
         if arg[:2] != '--':
-            print 'Expected arg "%s" to begin with --' % arg
+            print 'fillpdf: Expected arg "%s" to begin with --' % arg
             sys.exit(1)
         #field, value = arg[2:].split('=', 1)
         fieldNormed = ('__%s__' % arg[2:]).upper()
         if fieldNormed in fields:
             replacements[fieldNormed] = val
         else:
-            print ('WARNING: "%s" given on command line but "%s" not found in template file %s'
+            print ('fillpdf: WARNING: "%s" given on command line but "%s" not found in template file %s'
                    % (arg, fieldNormed, templateFilename))
 
     for field in fields:
@@ -121,7 +121,9 @@ def main():
     with open(texFilename, 'wb') as ff:
         ff.write(template)
 
-    print '\nCompiling pdf with pdflatex:'
+    print '\nfillpdf: Compiling pdf with pdflatex:'
+    if modeKeep:
+        print 'fillpdf: Temp files are in %s' % tmpDir
     for ii in range(2):
         # Run it twice...
         runCmd(('pdflatex', 'main'), cwd = tmpDir)
@@ -135,8 +137,8 @@ def main():
             os.unlink(os.path.join(tmpDir, filename))
         os.rmdir(tmpDir)
     else:
-        print 'Temp files are in %s' % tmpDir
-    print 'Generated filled form: %s' % pdfOutput
+        print 'fillpdf: Temp files are in %s' % tmpDir
+    print 'fillpdf: Generated filled form: %s' % pdfOutput
 
 
 
